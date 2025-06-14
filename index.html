@@ -97,6 +97,14 @@ if (!emailInput || !nicknameInput || !password) {
         document.getElementById("status").innerText = "✅ Passwort wurde erfolgreich geändert!";
       }
     }
+    window.addEventListener('load', () => {
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const access_token = params.get("access_token");
+
+  if (!access_token) {
+    document.body.innerHTML = "<h2>❌ Dieser Link ist abgelaufen oder ungültig.</h2><p>Bitte fordere eine neue E-Mail zum Zurücksetzen an.</p>";
+  }
+});
   </script>
 </body>
 </html>
