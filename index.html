@@ -19,10 +19,6 @@
       padding: 10px 20px;
       margin-top: 10px;
     }
-    #status {
-      margin-top: 15px;
-      font-weight: bold;
-    }
   </style>
 </head>
 <body>
@@ -41,84 +37,89 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhZGtyeXRrYnR6d2NyaWJ5dmhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NTY2ODIsImV4cCI6MjA2MzQzMjY4Mn0.1o4jImymNpiyufEOYDDEno-NRFs21Os1zi5kIXvzycI'
     );
 
+    let tokenFromUrl = null;
+
+    // Token aus Hash (#access_token=...) oder Query (?token=...&type=recovery)
+    window.addEventListener('load', async () => {
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      const queryParams = new URLSearchParams(window.location.search);
+
+      tokenFromUrl = hashParams.get("access_token");
+
+      if (!tokenFromUrl && queryParams.get("type") === "recovery") {
+        tokenFromUrl = queryParams.get("token");
+      }
+
+      if (!tokenFromUrl) {
+        document.getElementById("status").innerText =
+          "❌ Kein gültiger Token gefunden. Bitte fordere eine neue E-Mail an.";
+        document.querySelectorAll("input, button").forEach(el => el.disabled = true);
+      }
+    });
+
     async function resetPassword() {
-      const emailInput = document.getElementById("email").value.trim();
-      const nicknameInput = document.getElementById("nickname").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const nickname = document.getElementById("nickname").value.trim();
       const password = document.getElementById("password").value;
 
-      const params = new URLSearchParams(window.location.hash.slice(1));
-      const access_token = params.get("access_token");
-
-      if (!access_token) {
-        document.getElementById("status").innerText = "❌ Der Link ist ungültig oder abgelaufen. Bitte fordere eine neue Zurücksetzungs-Mail an.";
+      if (!tokenFromUrl) {
+        document.getElementById("status").innerText = "❌ Kein gültiger Token vorhanden.";
         return;
       }
 
-      if (!emailInput || !nicknameInput || !password) {
+      if (!email || !nickname || !password) {
         document.getElementById("status").innerText = "⚠️ Bitte alle Felder ausfüllen.";
         return;
       }
 
+      // Session setzen
       const { error: sessionError } = await supabase.auth.setSession({
-        access_token,
+        access_token: tokenFromUrl,
         refresh_token: ""
       });
 
       if (sessionError) {
-        document.getElementById("status").innerText = "❌ Ungültiger Token.";
+        document.getElementById("status").innerText = "❌ Ungültiger oder abgelaufener Token.";
         return;
       }
 
+      // Benutzer laden
       const { data: userData, error: userError } = await supabase.auth.getUser();
 
       if (userError || !userData?.user) {
-        document.getElementById("status").innerText = "❌ Fehler beim Laden des Benutzers.";
+        document.getElementById("status").innerText = "❌ Benutzer konnte nicht geladen werden.";
         return;
       }
 
       const user = userData.user;
 
-      if (user.email !== emailInput) {
-        document.getElementById("status").innerText = "❌ E-Mail stimmt nicht mit Benutzer überein.";
+      if (user.email !== email) {
+        document.getElementById("status").innerText = "❌ E-Mail stimmt nicht mit dem Konto überein.";
         return;
       }
 
-      const savedNickname = user.user_metadata?.nickname;
-
-      if (savedNickname !== nicknameInput) {
+      const savedNickname = user.user_metadata?.nickname || '';
+      if (savedNickname !== nickname) {
         document.getElementById("status").innerText = "❌ Profilname stimmt nicht überein.";
         return;
       }
 
+      // Passwort aktualisieren
       const { error: updateError } = await supabase.auth.updateUser({ password });
 
       if (updateError) {
-        document.getElementById("status").innerText = "❌ Fehler beim Setzen des Passworts: " + updateError.message;
+        document.getElementById("status").innerText =
+          "❌ Fehler beim Ändern des Passworts: " + updateError.message;
       } else {
-        document.getElementById("status").innerText = "✅ Passwort wurde erfolgreich geändert!";
+        document.getElementById("status").innerText =
+          "✅ Passwort wurde erfolgreich geändert!";
 
-        // Token aus der URL entfernen (optional, nach kurzer Zeit)
+        // Token aus URL entfernen
         setTimeout(() => {
           window.history.replaceState({}, document.title, window.location.pathname);
-        }, 500);
+        }, 1000);
       }
     }
-  </script>
-
-  <script>
-    // Überprüfe Token direkt beim Laden
-    window.addEventListener('load', () => {
-      const params = new URLSearchParams(window.location.hash.slice(1));
-      const access_token = params.get("access_token");
-
-      if (!access_token) {
-        document.getElementById("status").innerText =
-          "❌ Kein gültiger Zugang. Bitte fordere eine neue Zurücksetzungs-Mail an.";
-
-        // Eingabe sperren
-        document.querySelectorAll("input, button").forEach(el => el.disabled = true);
-      }
-    });
   </script>
 </body>
 </html>
