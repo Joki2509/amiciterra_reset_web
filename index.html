@@ -45,10 +45,15 @@
       const params = new URLSearchParams(window.location.hash.slice(1));
       const access_token = params.get("access_token");
 
-      if (!access_token || !emailInput || !nicknameInput || !password) {
-        document.getElementById("status").innerText = "⚠️ Bitte alle Felder ausfüllen.";
-        return;
-      }
+     if (!access_token) {
+  document.getElementById("status").innerText = "❌ Der Link ist ungültig oder abgelaufen. Bitte fordere eine neue Zurücksetzungs-Mail an.";
+  return;
+}
+
+if (!emailInput || !nicknameInput || !password) {
+  document.getElementById("status").innerText = "⚠️ Bitte alle Felder ausfüllen.";
+  return;
+}
 
       // Token setzen
       const { error: sessionError } = await supabase.auth.setSession({
