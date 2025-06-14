@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>AmiciTerra – Passwort zurücksetzen</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin-top: 100px;
+    }
+    input {
+      padding: 10px;
+      width: 300px;
+    }
+    button {
+      padding: 10px 20px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🔐 Neues Passwort setzen</h2>
+  <input type="password" id="password" placeholder="Neues Passwort"><br>
+  <button onclick="resetPassword()">Speichern</button>
+  <p id="status"></p>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://radkrytkbtzwcribyvhb.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhZGtyeXRrYnR6d2NyaWJ5dmhiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0Nzg1NjY4MiwiZXhwIjoyMDYzNDMyNjgyfQ.P7YVa4aKtd6Miq9raAdQQpLgTc7v4iEUwkCkTB9r1os'
+    );
+
+    async function resetPassword() {
+      const password = document.getElementById("password").value;
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      const access_token = params.get("access_token");
+
+      if (!access_token || !password) {
+        document.getElementById("status").innerText = "⚠️ Bitte Passwort eingeben";
+        return;
+      }
+
+      // Setze aktuelle Session (nur access_token reicht für Update)
+      await supabase.auth.setSession({
+        access_token: access_token,
+        refresh_token: ""
+      });
+
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        document.getElementById("status").innerText = "❌ Fehler: " + error.message;
+      } else {
+        document.getElementById("status").innerText = "✅ Passwort wurde erfolgreich geändert!";
+      }
+    }
+  </script>
+</body>
+</html>
