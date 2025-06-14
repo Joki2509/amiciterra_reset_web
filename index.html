@@ -13,6 +13,7 @@
     input {
       padding: 10px;
       width: 300px;
+      margin: 5px;
     }
     button {
       padding: 10px 20px;
@@ -22,35 +23,71 @@
 </head>
 <body>
   <h2>🔐 Neues Passwort setzen</h2>
-  <input type="password" id="password" placeholder="Neues Passwort"><br>
+
+  <input type="email" id="email" placeholder="E-Mail-Adresse" required><br>
+  <input type="text" id="nickname" placeholder="Profilname (Nickname)" required><br>
+  <input type="password" id="password" placeholder="Neues Passwort" required><br>
+
   <button onclick="resetPassword()">Speichern</button>
   <p id="status"></p>
 
   <script>
     const supabase = window.supabase.createClient(
-      'https://radkrytkbtzwcribyvhb.supabase.co',
+       'https://radkrytkbtzwcribyvhb.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhZGtyeXRrYnR6d2NyaWJ5dmhiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0Nzg1NjY4MiwiZXhwIjoyMDYzNDMyNjgyfQ.P7YVa4aKtd6Miq9raAdQQpLgTc7v4iEUwkCkTB9r1os'
     );
 
     async function resetPassword() {
+      const emailInput = document.getElementById("email").value.trim();
+      const nicknameInput = document.getElementById("nickname").value.trim();
       const password = document.getElementById("password").value;
+
       const params = new URLSearchParams(window.location.hash.slice(1));
       const access_token = params.get("access_token");
 
-      if (!access_token || !password) {
-        document.getElementById("status").innerText = "⚠️ Bitte Passwort eingeben";
+      if (!access_token || !emailInput || !nicknameInput || !password) {
+        document.getElementById("status").innerText = "⚠️ Bitte alle Felder ausfüllen.";
         return;
       }
 
-      // Setze aktuelle Session (nur access_token reicht für Update)
-      await supabase.auth.setSession({
-        access_token: access_token,
+      // Token setzen
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token,
         refresh_token: ""
       });
 
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) {
-        document.getElementById("status").innerText = "❌ Fehler: " + error.message;
+      if (sessionError) {
+        document.getElementById("status").innerText = "❌ Ungültiger Token.";
+        return;
+      }
+
+      // Benutzer abrufen
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !userData?.user) {
+        document.getElementById("status").innerText = "❌ Fehler beim Laden des Benutzers.";
+        return;
+      }
+
+      const user = userData.user;
+
+      if (user.email !== emailInput) {
+        document.getElementById("status").innerText = "❌ E-Mail stimmt nicht mit Benutzer überein.";
+        return;
+      }
+
+      const savedNickname = user.user_metadata?.nickname;
+
+      if (savedNickname !== nicknameInput) {
+        document.getElementById("status").innerText = "❌ Profilname stimmt nicht überein.";
+        return;
+      }
+
+      // Passwort setzen
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+
+      if (updateError) {
+        document.getElementById("status").innerText = "❌ Fehler beim Setzen des Passworts: " + updateError.message;
       } else {
         document.getElementById("status").innerText = "✅ Passwort wurde erfolgreich geändert!";
       }
