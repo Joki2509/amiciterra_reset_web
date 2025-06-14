@@ -34,7 +34,7 @@
   <script>
     const supabase = window.supabase.createClient(
        'https://radkrytkbtzwcribyvhb.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhZGtyeXRrYnR6d2NyaWJ5dmhiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0Nzg1NjY4MiwiZXhwIjoyMDYzNDMyNjgyfQ.P7YVa4aKtd6Miq9raAdQQpLgTc7v4iEUwkCkTB9r1os'
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhZGtyeXRrYnR6d2NyaWJ5dmhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NTY2ODIsImV4cCI6MjA2MzQzMjY4Mn0.1o4jImymNpiyufEOYDDEno-NRFs21Os1zi5kIXvzycI'
     );
 
     async function resetPassword() {
@@ -94,17 +94,26 @@ if (!emailInput || !nicknameInput || !password) {
       if (updateError) {
         document.getElementById("status").innerText = "❌ Fehler beim Setzen des Passworts: " + updateError.message;
       } else {
-        document.getElementById("status").innerText = "✅ Passwort wurde erfolgreich geändert!";
+       document.getElementById("status").innerText = "✅ Passwort wurde erfolgreich geändert!";
+
+      // Entferne Token aus URL nach erfolgreicher Änderung
+      setTimeout(() => {
+         window.history.replaceState({}, document.title, window.location.pathname);
+        }, 500);
       }
     }
+      </script>
     window.addEventListener('load', () => {
   const params = new URLSearchParams(window.location.hash.slice(1));
   const access_token = params.get("access_token");
 
   if (!access_token) {
-    document.body.innerHTML = "<h2>❌ Dieser Link ist abgelaufen oder ungültig.</h2><p>Bitte fordere eine neue E-Mail zum Zurücksetzen an.</p>";
+    document.getElementById("status").innerText = "❌ Kein gültiger Zugang. Bitte fordere eine neue Zurücksetzungs-Mail an.";
+    // Optional: Felder deaktivieren
+    document.querySelectorAll("input, button").forEach(el => el.disabled = true);
   }
 });
   </script>
 </body>
 </html>
+  
