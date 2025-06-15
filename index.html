@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>AmiciTerra – Passwort zurücksetzen</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
@@ -19,107 +19,102 @@
       padding: 10px 20px;
       margin-top: 10px;
     }
+    #status {
+      margin-top: 20px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <h2>🔐 Neues Passwort setzen</h2>
 
-  <input type="email" id="email" placeholder="E-Mail-Adresse" required><br>
-  <input type="text" id="nickname" placeholder="Profilname (Nickname)" required><br>
-  <input type="password" id="password" placeholder="Neues Passwort" required><br>
+  <input type="email" id="email" placeholder="E-Mail-Adresse" required /><br />
+  <input type="text" id="nickname" placeholder="Profilname (Nickname)" required /><br />
+  <input type="password" id="password" placeholder="Neues Passwort" required /><br />
 
   <button onclick="resetPassword()">Speichern</button>
   <p id="status"></p>
 
   <script>
     const supabase = window.supabase.createClient(
-      'https://radkrytkbtzwcribyvhb.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhZGtyeXRrYnR6d2NyaWJ5dmhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NTY2ODIsImV4cCI6MjA2MzQzMjY4Mn0.1o4jImymNpiyufEOYDDEno-NRFs21Os1zi5kIXvzycI'
+      "https://radkrytkbtzwcribyvhb.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhZGtyeXRrYnR6d2NyaWJ5dmhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NTY2ODIsImV4cCI6MjA2MzQzMjY4Mn0.1o4jImymNpiyufEOYDDEno-NRFs21Os1zi5kIXvzycI"
     );
-
-    let tokenFromUrl = null;
-
-    // Token aus Hash (#access_token=...) oder Query (?token=...&type=recovery)
-    window.addEventListener('load', async () => {
-      const hashParams = new URLSearchParams(window.location.hash.slice(1));
-      const queryParams = new URLSearchParams(window.location.search);
-
-      tokenFromUrl = hashParams.get("access_token");
-
-      if (!tokenFromUrl && queryParams.get("type") === "recovery") {
-        tokenFromUrl = queryParams.get("token");
-      }
-
-      if (!tokenFromUrl) {
-        document.getElementById("status").innerText =
-          "❌ Kein gültiger Token gefunden. Bitte fordere eine neue E-Mail an.";
-        document.querySelectorAll("input, button").forEach(el => el.disabled = true);
-      }
-    });
 
     async function resetPassword() {
       const email = document.getElementById("email").value.trim();
       const nickname = document.getElementById("nickname").value.trim();
       const password = document.getElementById("password").value;
+      const status = document.getElementById("status");
 
-      if (!tokenFromUrl) {
-        document.getElementById("status").innerText = "❌ Kein gültiger Token vorhanden.";
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      const access_token = params.get("access_token");
+
+      if (!access_token) {
+        status.textContent = "❌ Kein gültiger Token vorhanden.";
         return;
       }
 
       if (!email || !nickname || !password) {
-        document.getElementById("status").innerText = "⚠️ Bitte alle Felder ausfüllen.";
+        status.textContent = "⚠️ Bitte alle Felder ausfüllen.";
         return;
       }
 
       // Session setzen
       const { error: sessionError } = await supabase.auth.setSession({
-        access_token: tokenFromUrl,
-        refresh_token: ""
+        access_token,
+        refresh_token: "",
       });
 
       if (sessionError) {
-        document.getElementById("status").innerText = "❌ Ungültiger oder abgelaufener Token.";
+        status.textContent = "❌ Fehler beim Setzen der Session.";
         return;
       }
 
-      // Benutzer laden
       const { data: userData, error: userError } = await supabase.auth.getUser();
-
       if (userError || !userData?.user) {
-        document.getElementById("status").innerText = "❌ Benutzer konnte nicht geladen werden.";
+        status.textContent = "❌ Benutzer nicht gefunden.";
         return;
       }
 
       const user = userData.user;
 
       if (user.email !== email) {
-        document.getElementById("status").innerText = "❌ E-Mail stimmt nicht mit dem Konto überein.";
+        status.textContent = "❌ E-Mail stimmt nicht überein.";
         return;
       }
 
-      const savedNickname = user.user_metadata?.nickname || '';
-      if (savedNickname !== nickname) {
-        document.getElementById("status").innerText = "❌ Profilname stimmt nicht überein.";
+      const savedNickname = user.user_metadata?.nickname;
+      if (nickname !== savedNickname) {
+        status.textContent = "❌ Nickname stimmt nicht überein.";
         return;
       }
 
-      // Passwort aktualisieren
+      // Passwort setzen
       const { error: updateError } = await supabase.auth.updateUser({ password });
 
       if (updateError) {
-        document.getElementById("status").innerText =
-          "❌ Fehler beim Ändern des Passworts: " + updateError.message;
+        status.textContent = "❌ Fehler beim Ändern des Passworts: " + updateError.message;
       } else {
-        document.getElementById("status").innerText =
-          "✅ Passwort wurde erfolgreich geändert!";
+        status.textContent = "✅ Passwort erfolgreich geändert!";
 
-        // Token aus URL entfernen
+        // URL bereinigen
         setTimeout(() => {
           window.history.replaceState({}, document.title, window.location.pathname);
         }, 1000);
       }
     }
+
+    // Initial prüfen ob Token vorhanden ist
+    window.addEventListener("load", () => {
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      const access_token = params.get("access_token");
+      if (!access_token) {
+        document.getElementById("status").innerText =
+          "❌ Kein gültiger Zugang. Bitte fordere eine neue Zurücksetzungs-Mail an.";
+        document.querySelectorAll("input, button").forEach((el) => (el.disabled = true));
+      }
+    });
   </script>
 </body>
 </html>
