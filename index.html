@@ -110,6 +110,7 @@
     window.addEventListener("load", () => {
   const params = new URLSearchParams(window.location.hash.slice(1));
   const access_token = params.get("access_token");
+  console.log("Access Token aus URL:", access_token);
 
   if (!access_token) {
     document.getElementById("status").innerText =
