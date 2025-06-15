@@ -68,6 +68,7 @@
       });
 
       if (sessionError) {
+        console.log("SetSession Error:", sessionError);
         status.textContent = "❌ Fehler beim Setzen der Session.";
         return;
       }
