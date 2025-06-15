@@ -107,8 +107,7 @@
 
     // Initial prüfen ob Token vorhanden ist
     window.addEventListener("load", () => {
-     const params = new URLSearchParams(window.location.search);
-      const access_token = params.get("access_token");
+     new URLSearchParams(window.location.hash.slice(1));
       if (!access_token) {
         document.getElementById("status").innerText =
           "❌ Kein gültiger Zugang. Bitte fordere eine neue Zurücksetzungs-Mail an.";
