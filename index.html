@@ -50,7 +50,7 @@
       const params = new URLSearchParams(window.location.hash.slice(1)); 
       access_token = hashParams.get("access_token");
       refresh_token = hashParams.get("refresh_token") || "";
-      const type = params.get("type");
+      const type = hashParams.get("type");
 
       console.log("Access Token aus URL:", access_token);
       console.log("Refresh Token aus URL:", refresh_token);
