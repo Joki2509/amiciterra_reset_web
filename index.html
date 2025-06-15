@@ -41,13 +41,25 @@
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhZGtyeXRrYnR6d2NyaWJ5dmhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NTY2ODIsImV4cCI6MjA2MzQzMjY4Mn0.1o4jImymNpiyufEOYDDEno-NRFs21Os1zi5kIXvzycI"
     );
 
-    // ⬇ Zugriff auf Query-Parameter
-    const hashParams = new URLSearchParams(window.location.hash.slice(1));
-    const access_token = params.get("access_token");
-    const type = params.get("type");
+    // Tokens global verfügbar machen
+    let access_token = null;
+    let refresh_token = null;
 
-    console.log("Access Token aus URL:", access_token);
-    console.log("Type:", type);
+    // Hash-Parameter auslesen (z. B. #access_token=XYZ&type=recovery&refresh_token=...)
+    window.addEventListener("load", () => {
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      access_token = hashParams.get("access_token");
+      refresh_token = hashParams.get("refresh_token") || "";
+
+      console.log("Access Token aus URL:", access_token);
+      console.log("Refresh Token aus URL:", refresh_token);
+
+      if (!access_token) {
+        document.getElementById("status").innerText =
+          "❌ Kein gültiger Zugang. Bitte fordere eine neue Zurücksetzungs-Mail an.";
+        document.querySelectorAll("input, button").forEach((el) => (el.disabled = true));
+      }
+    });
 
     async function resetPassword() {
       const email = document.getElementById("email").value.trim();
@@ -68,7 +80,7 @@
       // Session setzen
       const { error: sessionError } = await supabase.auth.setSession({
         access_token,
-        refresh_token: "", // leer, da wir ihn nicht haben
+        refresh_token,
       });
 
       if (sessionError) {
@@ -77,6 +89,7 @@
         return;
       }
 
+      // Benutzer abrufen
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError || !userData?.user) {
         status.textContent = "❌ Benutzer nicht gefunden.";
@@ -96,7 +109,7 @@
         return;
       }
 
-      // Passwort setzen
+      // Passwort aktualisieren
       const { error: updateError } = await supabase.auth.updateUser({ password });
 
       if (updateError) {
@@ -108,15 +121,6 @@
         }, 1000);
       }
     }
-
-    // Direkt beim Laden prüfen
-    window.addEventListener("load", () => {
-      if (!access_token) {
-        document.getElementById("status").innerText =
-          "❌ Kein gültiger Zugang. Bitte fordere eine neue Zurücksetzungs-Mail an.";
-        document.querySelectorAll("input, button").forEach((el) => (el.disabled = true));
-      }
-    });
   </script>
 </body>
 </html>
