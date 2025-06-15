@@ -41,18 +41,19 @@
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhZGtyeXRrYnR6d2NyaWJ5dmhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NTY2ODIsImV4cCI6MjA2MzQzMjY4Mn0.1o4jImymNpiyufEOYDDEno-NRFs21Os1zi5kIXvzycI"
     );
 
+    // ⬇ Zugriff auf Query-Parameter
+    const params = new URLSearchParams(window.location.search);
+    const access_token = params.get("access_token");
+    const type = params.get("type");
+
+    console.log("Access Token aus URL:", access_token);
+    console.log("Type:", type);
+
     async function resetPassword() {
       const email = document.getElementById("email").value.trim();
       const nickname = document.getElementById("nickname").value.trim();
       const password = document.getElementById("password").value;
       const status = document.getElementById("status");
-
-      const hashParams = new URLSearchParams(window.location.hash.slice(1));
-      const access_token = hashParams.get("access_token");
-      const refresh_token = hashParams.get("refresh_token");
-
-      console.log("Access Token aus URL:", access_token);
-      console.log("Refresh Token aus URL:", refresh_token);
 
       if (!access_token) {
         status.textContent = "❌ Kein gültiger Token vorhanden.";
@@ -65,10 +66,9 @@
       }
 
       // Session setzen
-      console.log("Access Token aus URL:", access_token);
       const { error: sessionError } = await supabase.auth.setSession({
-      access_token,
-      refresh_token,
+        access_token,
+        refresh_token: "", // leer, da wir ihn nicht haben
       });
 
       if (sessionError) {
@@ -103,26 +103,20 @@
         status.textContent = "❌ Fehler beim Ändern des Passworts: " + updateError.message;
       } else {
         status.textContent = "✅ Passwort erfolgreich geändert!";
-
-        // URL bereinigen
         setTimeout(() => {
           window.history.replaceState({}, document.title, window.location.pathname);
         }, 1000);
       }
     }
 
-    // Initial prüfen ob Token vorhanden ist
+    // Direkt beim Laden prüfen
     window.addEventListener("load", () => {
-  const params = new URLSearchParams(window.location.hash.slice(1));
-  const access_token = params.get("access_token");
-  console.log("Access Token aus URL:", access_token);
-
-  if (!access_token) {
-    document.getElementById("status").innerText =
-      "❌ Kein gültiger Zugang. Bitte fordere eine neue Zurücksetzungs-Mail an.";
-    document.querySelectorAll("input, button").forEach((el) => (el.disabled = true));
-  }
-});
+      if (!access_token) {
+        document.getElementById("status").innerText =
+          "❌ Kein gültiger Zugang. Bitte fordere eine neue Zurücksetzungs-Mail an.";
+        document.querySelectorAll("input, button").forEach((el) => (el.disabled = true));
+      }
+    });
   </script>
 </body>
 </html>
