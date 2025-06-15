@@ -47,7 +47,7 @@
 
     // Hash-Parameter auslesen (z. B. #access_token=XYZ&type=recovery&refresh_token=...)
     window.addEventListener("load", () => {
-      const params = new URLSearchParams(window.location.hash.slice(1)); 
+      const hashParams = new URLSearchParams(window.location.hash.slice(1)); 
       access_token = hashParams.get("access_token");
       refresh_token = hashParams.get("refresh_token") || "";
       const type = hashParams.get("type");
