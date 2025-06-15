@@ -42,7 +42,7 @@
     );
 
     // ⬇ Zugriff auf Query-Parameter
-    const params = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.slice(1));
     const access_token = params.get("access_token");
     const type = params.get("type");
 
